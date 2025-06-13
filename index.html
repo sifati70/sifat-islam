@@ -1,64 +1,166 @@
-html_content = """
+<!DOCTYPE html><html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secure Cloud Storage</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #f0f4ff, #d4e1ff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .login-box {
+      background: #fff;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+    .login-box h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .login-box button:hover {
+      background: #3b7bd5;
+    }
+    .error {
+      color: red;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>সাইন ইন করুন</h2>
+    <input type="password" id="password" placeholder="পাসওয়ার্ড দিন">
+    <button onclick="checkPassword()">লগইন</button>
+    <p class="error" id="error">ভুল পাসওয়ার্ড!</p>
+  </div>  <script>
+    function checkPassword() {
+      const password = document.getElementById('password').value;
+      const error = document.getElementById('error');
+      if (password === '9226sttasin') {
+        window.location.href = 'dashboard.html';
+      } else {
+        error.style.display = 'block';
+      }
+    }
+  </script></body>
+</html>
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ST Tasin - Gojol Highlights</title>
-    <style>
-        body {
-            font-family: 'Helvetica', sans-serif;
-            background-color: #f4f4f9;
-            margin: 0;
-            padding: 20px;
-            color: #333;
-        }
-        h1, h2 {
-            text-align: center;
-            color: #2c3e50;
-        }
-        .video-section {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-        iframe {
-            width: 100%;
-            height: 315px;
-            border: none;
-            border-radius: 10px;
-        }
-        p {
-            text-align: center;
-            font-size: 16px;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ST ক্লাউড স্টোরেজ</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #e6f0ff, #d0e1f9);
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #4a90e2;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+    main {
+      padding: 30px;
+      text-align: center;
+    }
+    .upload-box {
+      background: white;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    input[type="file"] {
+      margin-top: 20px;
+    }
+    button {
+      margin-top: 20px;
+      background: #4a90e2;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background: #3b7bd5;
+    }
+    footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+    }
+  </style>
 </head>
 <body>
+  <header>
+    <h1>ST ক্লাউড স্টোরেজ</h1>
+    <p>স্বাগতম! আপনি আপনার ফাইল এখানে আপলোড করতে পারেন।</p>
+  </header>
 
-    <h1>ST Tasin গজল হাইলাইট</h1>
-
-    <div class="video-section">
-        <h2>Mahfil.net থেকে গজল</h2>
-        <iframe src="https://mahfil.net/embed/EEPhUv2AzVMecv5" allowfullscreen></iframe>
-        <p>ST Tasin এর কণ্ঠে হৃদয় ছোঁয়া গজল। সম্পূর্ণ ভিডিওটি দেখুন মাহফিল.নেট-এ।</p>
+  <main>
+    <div class="upload-box">
+      <h2>ফাইল আপলোড করুন</h2>
+      <input type="file" id="fileInput" />
+      <br />
+      <button onclick="uploadFile()">আপলোড করুন</button>
+      <p id="statusMsg"></p>
     </div>
+  </main>
 
-    <div class="video-section">
-        <h2>YouTube থেকে গজল</h2>
-        <iframe src="https://www.youtube.com/embed/VNvQgjZMtxc" allowfullscreen></iframe>
-        <p>ST Tasin এর YouTube চ্যানেল থেকে একটি অসাধারণ গজল। শুনলে মন জুড়িয়ে যাবে।</p>
-    </div>
+  <footer>
+    &copy; ২০২৫ ST Tasin. সর্বস্বত্ব সংরক্ষিত।
+  </footer>
 
+  <script>
+    function uploadFile() {
+      const file = document.getElementById("fileInput").files[0];
+      const status = document.getElementById("statusMsg");
+
+      if (file) {
+        status.innerHTML = `আপলোড সফল: ${file.name}`;
+        status.style.color = 'green';
+        // এখানে আসল ক্লাউডে আপলোড কোড দিতে হবে (যেমন: Firebase, Google Drive API)
+      } else {
+        status.innerHTML = "দয়া করে একটি ফাইল নির্বাচন করুন।";
+        status.style.color = 'red';
+      }
+    }
+  </script>
 </body>
 </html>
-"""
-
-file_path = "/mnt/data/st-tasin-gojol-highlights.html"
-with open(file_path, "w", encoding="utf-8") as f:
-    f.write(html_content)
-
-file_path
