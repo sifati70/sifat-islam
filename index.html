@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="bn">
+<!DOCTYPE html>
+<html lang="bn">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -60,7 +61,9 @@
     <input type="password" id="password" placeholder="পাসওয়ার্ড দিন">
     <button onclick="checkPassword()">লগইন</button>
     <p class="error" id="error">ভুল পাসওয়ার্ড!</p>
-  </div>  <script>
+  </div>
+
+  <script>
     function checkPassword() {
       const password = document.getElementById('password').value;
       const error = document.getElementById('error');
@@ -70,97 +73,96 @@
         error.style.display = 'block';
       }
     }
-  </script></body>
-</html>
-<!DOCTYPE html>
-<html lang="bn">
+  </script>
+</body>
+<!DOCTYPE html><html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ST ক্লাউড স্টোরেজ</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloud Dashboard</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #e6f0ff, #d0e1f9);
-      margin: 0;
-      padding: 0;
-    }
-    header {
-      background: #4a90e2;
-      color: white;
+      font-family: sans-serif;
+      background: #eef2ff;
       padding: 20px;
-      text-align: center;
     }
-    main {
-      padding: 30px;
-      text-align: center;
-    }
-    .upload-box {
-      background: white;
+    .container {
       max-width: 500px;
-      margin: 0 auto;
-      padding: 30px;
+      margin: auto;
+      background: white;
+      padding: 20px;
       border-radius: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
     input[type="file"] {
+      margin: 10px 0;
+    }
+    .file-list {
       margin-top: 20px;
     }
-    button {
-      margin-top: 20px;
-      background: #4a90e2;
-      color: white;
-      border: none;
-      padding: 12px 25px;
+    .file-item {
+      background: #f0f4ff;
+      padding: 8px;
+      margin: 5px 0;
       border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-    button:hover {
-      background: #3b7bd5;
-    }
-    footer {
-      margin-top: 40px;
-      text-align: center;
-      font-size: 14px;
-      color: #555;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>ST ক্লাউড স্টোরেজ</h1>
-    <p>স্বাগতম! আপনি আপনার ফাইল এখানে আপলোড করতে পারেন।</p>
-  </header>
+  <div class="container">
+    <h2>ফাইল আপলোড করুন</h2>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">আপলোড</button>
+    <div class="file-list" id="fileList"></div>
+  </div>  <script>
+    // 🔁 এখানকার config আপনার firebase থেকে কপি করে বসান
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_BUCKET.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
 
-  <main>
-    <div class="upload-box">
-      <h2>ফাইল আপলোড করুন</h2>
-      <input type="file" id="fileInput" />
-      <br />
-      <button onclick="uploadFile()">আপলোড করুন</button>
-      <p id="statusMsg"></p>
-    </div>
-  </main>
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
 
-  <footer>
-    &copy; ২০২৫ ST Tasin. সর্বস্বত্ব সংরক্ষিত।
-  </footer>
-
-  <script>
     function uploadFile() {
-      const file = document.getElementById("fileInput").files[0];
-      const status = document.getElementById("statusMsg");
-
-      if (file) {
-        status.innerHTML = `আপলোড সফল: ${file.name}`;
-        status.style.color = 'green';
-        // এখানে আসল ক্লাউডে আপলোড কোড দিতে হবে (যেমন: Firebase, Google Drive API)
-      } else {
-        status.innerHTML = "দয়া করে একটি ফাইল নির্বাচন করুন।";
-        status.style.color = 'red';
-      }
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return alert("ফাইল নির্বাচন করুন");
+      const ref = storage.ref('files/' + file.name);
+      ref.put(file).then(() => {
+        alert("✅ ফাইল আপলোড হয়েছে");
+        listFiles();
+      });
     }
-  </script>
-</body>
-</html>
+
+    function listFiles() {
+      const listRef = storage.ref('files');
+      listRef.listAll().then(res => {
+        const fileList = document.getElementById('fileList');
+        fileList.innerHTML = '<h3>আপনার ফাইলসমূহ:</h3>';
+        res.items.forEach(itemRef => {
+          itemRef.getDownloadURL().then(url => {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `<a href="${url}" target="_blank">${itemRef.name}</a>`;
+            fileList.appendChild(div);
+          });
+        });
+      });
+    }
+
+    listFiles();
+  </script></body>
+  const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_BUCKET.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
