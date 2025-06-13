@@ -1,66 +1,64 @@
+html_content = """
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Image Sketcher Pro</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    .sketch-img {
-      filter: grayscale(100%) contrast(150%);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ST Tasin - Gojol Highlights</title>
+    <style>
+        body {
+            font-family: 'Helvetica', sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .video-section {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        iframe {
+            width: 100%;
+            height: 315px;
+            border: none;
+            border-radius: 10px;
+        }
+        p {
+            text-align: center;
+            font-size: 16px;
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center px-4">
-  <div class="bg-white shadow-xl rounded-2xl p-6 w-full max-w-2xl">
-    <h1 class="text-2xl font-semibold text-center mb-6 text-gray-800">🖼️ Image Sketcher Pro</h1>
-    <div class="flex flex-col items-center gap-4">
-      <input type="file" accept="image/*" id="imageInput" class="file:bg-indigo-600 file:text-white file:px-4 file:py-2 file:rounded-lg file:cursor-pointer file:border-0 text-gray-700" />
-      <button onclick="convertToSketch()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2 rounded-xl transition">Convert to Sketch</button>
-      <canvas id="canvas" class="hidden rounded-lg shadow-md"></canvas>
+<body>
+
+    <h1>ST Tasin গজল হাইলাইট</h1>
+
+    <div class="video-section">
+        <h2>Mahfil.net থেকে গজল</h2>
+        <iframe src="https://mahfil.net/embed/EEPhUv2AzVMecv5" allowfullscreen></iframe>
+        <p>ST Tasin এর কণ্ঠে হৃদয় ছোঁয়া গজল। সম্পূর্ণ ভিডিওটি দেখুন মাহফিল.নেট-এ।</p>
     </div>
-  </div>
 
-  <script>
-    function convertToSketch() {
-      const input = document.getElementById('imageInput');
-      const canvas = document.getElementById('canvas');
-      const ctx = canvas.getContext('2d');
+    <div class="video-section">
+        <h2>YouTube থেকে গজল</h2>
+        <iframe src="https://www.youtube.com/embed/VNvQgjZMtxc" allowfullscreen></iframe>
+        <p>ST Tasin এর YouTube চ্যানেল থেকে একটি অসাধারণ গজল। শুনলে মন জুড়িয়ে যাবে।</p>
+    </div>
 
-      if (!input.files[0]) {
-        alert('Please select an image first.');
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        const img = new Image();
-        img.onload = function () {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0);
-
-          let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          let data = imageData.data;
-
-          for (let i = 0; i < data.length; i += 4) {
-            let avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-            data[i] = avg;
-            data[i + 1] = avg;
-            data[i + 2] = avg;
-          }
-
-          ctx.putImageData(imageData, 0, 0);
-          canvas.classList.remove('hidden');
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
-  </script>
 </body>
 </html>
+"""
+
+file_path = "/mnt/data/st-tasin-gojol-highlights.html"
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+file_path
