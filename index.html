@@ -2,11 +2,141 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Image Sketcher</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font‑family: 'Inter', sans‑serif; }
+    .canvas‑container {
+      position: relative; width:100%; padding‑top:100%; overflow:hidden; background:#f3f4f6;
+    }
+    canvas {
+      position:absolute; top:0; left:0; width:100%; height:100%; object‑fit:contain;
+    }
+    .loader {
+      border‑top‑color: #3498db;
+      animation: spinner 1.5s linear infinite;
+    }
+    @keyframes spinner {
+      0% { transform:rotate(0deg); }
+      100% { transform:rotate(360deg); }
+    }
+  </style>
 </head>
-<body>
-  <h1>Hello Sifati!</h1>
-  <p>Your site is working 🎉</p>
+<body class="bg-gray-100 text-gray-800">
+  <div class="container mx-auto p-4 max-w-3xl">
+    <h1 class="text-4xl text-center font-bold my-6">Image to Sketch Converter</h1>
+    <div class="bg-white p-6 rounded-lg shadow">
+      <div class="flex flex-col sm:flex-row items-center gap-4 mb-6">
+        <input type="file" id="imageLoader" accept="image/*" class="file:py-2 file:px-4 file:bg-blue-50 file:text-blue-700"/>
+        <button id="sketchBtn" disabled class="bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50">Convert to Sketch</button>
+        <button id="downloadBtn" disabled class="bg-green-600 text-white py-2 px-4 rounded disabled:opacity-50">Download Sketch</button>
+      </div>
+      <div id="loader" class="hidden text-center my-4">
+        <div class="loader h-12 w-12 border-4 border-gray-200 rounded-full mx-auto"></div>
+        <p class="mt-2">Sketching...</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 class="text-xl text-center mb-2">Original</h2>
+          <div class="canvas-container rounded-lg shadow"><canvas id="originalCanvas"></canvas></div>
+        </div>
+        <div>
+          <h2 class="text-xl text-center mb-2">Sketch</h2>
+          <div class="canvas-container rounded-lg shadow"><canvas id="sketchCanvas"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const imgLoader = document.getElementById('imageLoader');
+    const original = document.getElementById('originalCanvas');
+    const sketch = document.getElementById('sketchCanvas');
+    const sketchBtn = document.getElementById('sketchBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const loader = document.getElementById('loader');
+    const oCtx = original.getContext('2d');
+    const sCtx = sketch.getContext('2d');
+    let img = new Image();
+
+    imgLoader.addEventListener('change', e=>{
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        img = new Image();
+        img.onload = ()=> {
+          resizeAndDraw(img,oCtx,original);
+          sketchBtn.disabled=false;
+          downloadBtn.disabled=true;
+          sCtx.clearRect(0,0,sketch.width,sketch.height);
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    sketchBtn.addEventListener('click', ()=>{
+      loader.classList.remove('hidden');
+      sketchBtn.disabled=true;
+      setTimeout(()=>{
+        applySketch();
+        downloadBtn.disabled=false;
+        loader.classList.add('hidden');
+        sketchBtn.disabled=false;
+      },50);
+    });
+
+    downloadBtn.addEventListener('click', ()=>{
+      const link = document.createElement('a');
+      link.download = 'sketch.png';
+      link.href = sketch.toDataURL();
+      link.click();
+    });
+
+    function resizeAndDraw(img,ctx,canvas) {
+      const cont = canvas.parentElement;
+      canvas.width = cont.clientWidth;
+      canvas.height = cont.clientHeight;
+      const iAR = img.width/img.height;
+      const cAR = canvas.width/canvas.height;
+      let w,h,x=0,y=0;
+      if(iAR>cAR){ w=canvas.width; h=w/iAR; y=(canvas.height-h)/2; }
+      else{ h=canvas.height; w=h*iAR; x=(canvas.width-w)/2; }
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.drawImage(img,x,y,w,h);
+    }
+
+    function applySketch(){
+      resizeAndDraw(img,oCtx,original);
+      resizeAndDraw(img,sCtx,sketch);
+      const {width:w,height:h} = original;
+      const orig = oCtx.getImageData(0,0,w,h);
+      const gray = new Uint8ClampedArray(orig.data);
+      for(let i=0;i<gray.length;i+=4){
+        const avg=(orig.data[i]+orig.data[i+1]+orig.data[i+2])/3;
+        gray[i]=gray[i+1]=gray[i+2]=avg;
+      }
+      const inv = gray.map((v,i)=> i%4===3 ? v : 255-v);
+      const buff = new Uint8ClampedArray(inv);
+      const tmp = new ImageData(buff,w,h);
+      const tc = document.createElement('canvas').getContext('2d');
+      tc.canvas.width = w; tc.canvas.height = h;
+      tc.putImageData(tmp,0,0);
+      tc.filter = 'blur(10px)';
+      tc.drawImage(tc.canvas,0,0);
+      const blur = tc.getImageData(0,0,w,h);
+
+      const result = sCtx.createImageData(w,h);
+      for(let i=0;i<orig.data.length;i+=4){
+        const d = gray[i], b=blur.data[i];
+        const val = Math.min(255, (d*255)/(255-b+1));
+        result.data[i]=result.data[i+1]=result.data[i+2]=val;
+        result.data[i+3]=255;
+      }
+      sCtx.putImageData(result,0,0);
+    }
+  </script>
 </body>
 </html>
