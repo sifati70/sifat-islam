@@ -3,320 +3,408 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ফুলের অ্যানিমেশন</title>
+  <title>ফুলবাগান — HD অ্যানিমেশন</title>
+  <meta name="color-scheme" content="light dark">
   <style>
     :root{
-      --bg: linear-gradient(180deg, #f7fbff 0%, #e8f6f8 100%);
-      --stem: #3b8b59;
-      --leaf: #2e7d4a;
-      --petal1: #ff9fb1;
-      --petal2: #ffd6a5;
-      --center: #ffd25a;
-      --duration-sway: 6s;
-      --duration-bloom: 1.2s;
-      --petal-float: 8s;
+      --bg-top: #fffdf7;
+      --bg-bottom: #eaf7ff;
+      --sun-x: 85%; /* sun position (right) */
+      --sun-y: 12%;  /* sun position (from top) */
+      --sun-size: 380px;
+      --wind-phase: 0; /* updated by JS */
     }
 
-    /* Basic page layout */
     html,body{
       height:100%;
       margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans Bengali","Noto Sans",sans-serif;
-      background: var(--bg);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .scene{
-      width:min(920px, 95vw);
-      height:min(520px, 75vh);
-      position:relative;
+      font-family: system-ui, -apple-system, "Noto Sans Bengali", "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
       overflow:hidden;
-      border-radius:18px;
-      box-shadow: 0 10px 30px rgba(30,60,90,0.08);
-      background:
-        radial-gradient(900px 400px at 10% 10%, rgba(255,255,255,0.6), transparent 20%),
-        radial-gradient(700px 300px at 90% 90%, rgba(255,255,255,0.5), transparent 20%),
-        transparent;
-      padding:20px;
-      box-sizing:border-box;
+      color:#123;
     }
 
-    svg.flowers{
+    /* Fullscreen canvas area */
+    .garden{
+      position:fixed;
+      inset:0;
+      display:block;
+      width:100%;
+      height:100%;
+      touch-action: none;
+    }
+
+    /* subtle horizon ground */
+    .ground {
+      position:absolute;
+      left:0; right:0;
+      bottom:0;
+      height:18vh;
+      background: linear-gradient(180deg, rgba(50,150,80,0.06), rgba(50,150,80,0.14));
+      pointer-events:none;
+      mix-blend-mode: multiply;
+    }
+
+    /* Sun glow (CSS radial) */
+    .sun {
+      position:absolute;
+      left:var(--sun-x);
+      top:var(--sun-y);
+      width:var(--sun-size);
+      height:var(--sun-size);
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+      border-radius:50%;
+      background: radial-gradient(circle at 35% 30%, rgba(255,246,200,0.95) 0%, rgba(255,235,150,0.6) 20%, rgba(255,190,80,0.14) 45%, rgba(255,180,60,0.06) 60%, transparent 70%);
+      filter: blur(20px);
+      mix-blend-mode: screen;
+      z-index:5;
+    }
+
+    /* SVG container (flowers placed inside) */
+    svg#meadow {
       width:100%;
       height:100%;
       display:block;
+      overflow:visible;
+      pointer-events:none;
     }
 
-    /* stems */
-    .stem{
-      stroke: var(--stem);
-      stroke-width:6;
-      stroke-linecap:round;
-      fill:none;
-    }
-
-    /* leaves */
-    .leaf{
-      fill:var(--leaf);
-      transform-origin: center;
-      animation: leaf-sway var(--duration-sway) ease-in-out infinite;
-    }
-
-    /* petal common */
-    .petal{
-      transform-origin: center;
-      fill: var(--petal1);
-      transition: transform 300ms ease;
-      transform-box: fill-box;
-    }
-
-    .petal.alt{ fill: var(--petal2); }
-
-    .center{
-      fill: var(--center);
-      transform-origin: center;
-      transform-box: fill-box;
-      animation: center-pulse 2.5s ease-in-out infinite;
-    }
-
-    /* flower container sway */
-    .flower{
-      transform-origin: 50% 100%;
-      animation: sway calc(var(--duration-sway) * var(--sway-mult,1)) ease-in-out infinite;
-    }
-
-    /* bloom on load */
-    .flower .petal, .flower .center{
-      transform: scale(0.0);
-      opacity:0;
-      animation: bloom var(--duration-bloom) cubic-bezier(.2,.9,.2,1) forwards;
-    }
-
-    /* staggered bloom */
-    .flower:nth-child(1) .petal, .flower:nth-child(1) .center { animation-delay: 0.1s; }
-    .flower:nth-child(2) .petal, .flower:nth-child(2) .center { animation-delay: 0.4s; }
-    .flower:nth-child(3) .petal, .flower:nth-child(3) .center { animation-delay: 0.7s; }
-
-    /* gentle floating petals */
-    .petal-floating {
-      animation: petal-float var(--petal-float) ease-in-out infinite;
-    }
-
-    /* subtle leaf sway keyframes */
-    @keyframes leaf-sway{
-      0%{ transform: rotate(-6deg) }
-      50%{ transform: rotate(6deg) }
-      100%{ transform: rotate(-6deg) }
-    }
-
-    @keyframes sway{
-      0%{ transform: rotate(-4deg) translateY(0px); }
-      50%{ transform: rotate(4deg) translateY(-6px); }
-      100%{ transform: rotate(-4deg) translateY(0px); }
-    }
-
-    @keyframes bloom{
-      0%{ transform: scale(0.0); opacity:0; }
-      60%{ transform: scale(1.05); opacity:1; }
-      100%{ transform: scale(1); opacity:1; }
-    }
-
-    @keyframes center-pulse{
-      0%{ transform: scale(1); }
-      50%{ transform: scale(1.08); }
-      100%{ transform: scale(1); }
-    }
-
-    @keyframes petal-float{
-      0%{ transform: translateY(0px) rotate(0deg); }
-      25%{ transform: translateY(-4px) rotate(3deg); }
-      50%{ transform: translateY(0px) rotate(0deg); }
-      75%{ transform: translateY(3px) rotate(-2deg); }
-      100%{ transform: translateY(0px) rotate(0deg); }
-    }
-
-    /* small floating decorative petals */
-    .floating-petal {
-      position:absolute;
-      width:18px;
-      height:18px;
-      opacity:0.85;
-      border-radius:50% 40% 60% 50%;
-      transform-origin:center;
-      animation: float-away 10s linear infinite;
+    /* individual flower group */
+    .flower {
+      transform-origin: center bottom;
       will-change: transform, opacity;
     }
 
-    @keyframes float-away{
-      0%{ transform: translateY(0) translateX(0) rotate(0) scale(0.9); opacity:1; }
-      70%{ opacity:0.8; }
-      100%{ transform: translateY(-320px) translateX(80px) rotate(180deg) scale(0.6); opacity:0; }
+    /* stem */
+    .stem {
+      stroke: rgba(45,100,60,0.95);
+      stroke-width: 3.6;
+      stroke-linecap: round;
+      fill:none;
+      vector-effect: non-scaling-stroke;
     }
 
-    /* accessibility: prefers reduced motion */
-    @media (prefers-reduced-motion: reduce){
-      .flower, .leaf, .petal, .center, .floating-petal { animation: none !important; transform:none !important; }
+    /* leaf */
+    .leaf {
+      fill: rgba(50,120,70,0.9);
+      transform-origin: center;
     }
 
-    /* controls UI */
-    .controls{
-      position:absolute;
-      left:18px;
-      bottom:18px;
-      display:flex;
-      gap:8px;
-      align-items:center;
-      background:rgba(255,255,255,0.7);
-      padding:8px 12px;
-      border-radius:10px;
+    /* petals & center */
+    .petal{
+      transform-origin: center;
+      transition: transform 240ms ease;
+      vector-effect: non-scaling-stroke;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+    }
+    .center{
+      filter: drop-shadow(0 1px 4px rgba(0,0,0,0.12));
+    }
+
+    /* bloom animation on load (scale + fade in) */
+    .flower .petal, .flower .center {
+      transform: scale(0.0);
+      opacity: 0;
+      animation: bloom 900ms cubic-bezier(.2,.9,.2,1) forwards;
+    }
+    @keyframes bloom {
+      0%{ transform: scale(0.0); opacity:0; }
+      60%{ transform: scale(1.08); opacity:1; }
+      100%{ transform: scale(1); opacity:1; }
+    }
+
+    /* wind sway controlled by CSS variable --wind (deg) and --sway-mult */
+    .flower {
+      /* base rotation uses --wind-phase from JS */
+      transform: rotate(calc(var(--wind-phase, 0deg) * var(--sway-mult, 1))) translateY(0);
+      transition: transform 300ms linear;
+    }
+
+    /* soft glow on petal toward sun: we'll use mix-blend & radial gradient mask */
+    .petal-glow {
+      mix-blend-mode: screen;
+      opacity: 0.28;
+      filter: blur(6px);
+    }
+
+    /* small float for petals (gentle) */
+    .petal-floating {
+      animation: floaty 6s ease-in-out infinite;
+    }
+    @keyframes floaty {
+      0%{ transform: translateY(0) rotate(0deg); }
+      50%{ transform: translateY(-5px) rotate(3deg); }
+      100%{ transform: translateY(0) rotate(0deg); }
+    }
+
+    /* control panel */
+    .ui {
+      position: fixed;
+      right: 18px;
+      top: 18px;
+      background: rgba(255,255,255,0.75);
+      border-radius: 10px;
+      padding: 10px 12px;
       backdrop-filter: blur(6px);
-      box-shadow: 0 6px 18px rgba(20,40,60,0.06);
-      font-size:13px;
+      box-shadow: 0 8px 20px rgba(20,40,60,0.08);
+      font-size: 13px;
+      z-index: 60;
     }
-    .controls label{ font-weight:600; margin-right:6px; color:#133; }
-    .controls input[type="range"]{ width:140px; }
-    .controls button{
-      border:0; background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer;
-      box-shadow: 0 3px 8px rgba(20,40,60,0.06);
+    .ui label{ font-weight:700; margin-right:6px; color:#123; }
+    .ui input[type="range"]{ width:140px; vertical-align:middle; }
+    .ui button{
+      border:0; background:#fff; padding:6px 8px; border-radius:8px; cursor:pointer;
+      box-shadow: 0 4px 10px rgba(20,40,60,0.06); margin-left:8px;
     }
+
+    /* accessibility */
+    @media (prefers-reduced-motion: reduce){
+      .flower, .petal-floating { animation: none !important; transition: none !important; }
+    }
+
   </style>
 </head>
 <body>
-  <div class="scene" role="img" aria-label="ফুলের নরম অ্যানিমেশন দৃশ্য">
-    <!-- SVG flowers: each .flower is group with its own transform-origin at bottom -->
-    <svg class="flowers" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="false" focusable="false">
-      <!-- Ground hint -->
-      <ellipse cx="450" cy="490" rx="370" ry="28" fill="rgba(60,160,100,0.08)"></ellipse>
+  <div class="garden" role="application" aria-label="ফুলবাগান অ্যানিমেশন">
+    <div class="sun" aria-hidden="true"></div>
 
-      <!-- Flower 1 (left) -->
-      <g class="flower" style="--sway-mult:1.0; transform-origin: 180px 420px;">
-        <!-- stem path -->
-        <path class="stem" d="M180 520 C182 480, 190 440, 180 420" />
-        <!-- leaf -->
-        <path class="leaf" d="M185 475 C200 465, 210 470, 198 490 C188 505, 170 500, 185 475Z"/>
-        <!-- petals (a simple 6-petal flower) -->
-        <g transform="translate(180,410)">
-          <g>
-            <ellipse class="petal petal-floating" cx="0" cy="-28" rx="16" ry="28" />
-            <ellipse class="petal alt petal-floating" cx="22" cy="-10" rx="16" ry="28" transform="rotate(45)" />
-            <ellipse class="petal petal-floating" cx="22" cy="18" rx="16" ry="28" transform="rotate(90)" />
-            <ellipse class="petal alt petal-floating" cx="0" cy="36" rx="16" ry="28" transform="rotate(135)" />
-            <ellipse class="petal petal-floating" cx="-22" cy="18" rx="16" ry="28" transform="rotate(180)" />
-            <ellipse class="petal alt petal-floating" cx="-22" cy="-10" rx="16" ry="28" transform="rotate(-45)" />
-            <circle class="center" cx="0" cy="0" r="10" />
-          </g>
-        </g>
-      </g>
+    <!-- SVG template (hidden) -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;pointer-events:none" aria-hidden="true">
+      <defs>
+        <!-- gentle blur filter for petal highlight -->
+        <filter id="softBlur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="b"/>
+          <feComposite in="b" in2="SourceGraphic" operator="over"/>
+        </filter>
 
-      <!-- Flower 2 (center, taller) -->
-      <g class="flower" style="--sway-mult:1.2; transform-origin: 460px 400px;">
-        <path class="stem" d="M460 520 C458 480, 462 440, 460 400" />
-        <path class="leaf" d="M455 460 C440 450, 430 460, 445 480 C455 495, 470 490, 455 460Z"/>
-        <g transform="translate(460,360) scale(1.2)">
-          <g>
-            <ellipse class="petal alt petal-floating" cx="0" cy="-36" rx="20" ry="36" />
-            <ellipse class="petal petal-floating" cx="30" cy="-8" rx="20" ry="36" transform="rotate(45)" />
-            <ellipse class="petal alt petal-floating" cx="30" cy="28" rx="20" ry="36" transform="rotate(90)" />
-            <ellipse class="petal petal-floating" cx="0" cy="64" rx="20" ry="36" transform="rotate(135)" />
-            <ellipse class="petal alt petal-floating" cx="-30" cy="28" rx="20" ry="36" transform="rotate(180)" />
-            <ellipse class="petal petal-floating" cx="-30" cy="-8" rx="20" ry="36" transform="rotate(-45)" />
-            <circle class="center" cx="0" cy="0" r="14" />
+        <!-- flower template as symbol -->
+        <symbol id="flowerTemplate" viewBox="-40 -68 80 120">
+          <!-- stem -->
+          <path class="stem" d="M0 52 C -2 30, -6 18, 0 0" />
+          <!-- left leaf -->
+          <path class="leaf" d="M-4 30 C -22 20, -28 34, -10 40 C -2 42, 2 36, -4 30Z" />
+          <!-- petals (6) -->
+          <g id="petals">
+            <ellipse class="petal" cx="0" cy="-28" rx="12" ry="22" />
+            <ellipse class="petal" cx="20" cy="-8" rx="12" ry="22" transform="rotate(40 20 -8)"/>
+            <ellipse class="petal" cx="20" cy="20" rx="12" ry="22" transform="rotate(80 20 20)"/>
+            <ellipse class="petal" cx="0" cy="44" rx="12" ry="22" transform="rotate(120)" />
+            <ellipse class="petal" cx="-20" cy="20" rx="12" ry="22" transform="rotate(160 -20 20)"/>
+            <ellipse class="petal" cx="-20" cy="-8" rx="12" ry="22" transform="rotate(-40 -20 -8)"/>
           </g>
-        </g>
-      </g>
-
-      <!-- Flower 3 (right) -->
-      <g class="flower" style="--sway-mult:0.85; transform-origin: 720px 430px;">
-        <path class="stem" d="M720 520 C722 480, 730 440, 720 430" />
-        <path class="leaf" d="M725 470 C740 460, 750 465, 738 485 C728 500, 710 495, 725 470Z"/>
-        <g transform="translate(720,410) scale(0.9)">
-          <g>
-            <ellipse class="petal petal-floating" cx="0" cy="-30" rx="16" ry="30" />
-            <ellipse class="petal alt petal-floating" cx="24" cy="-6" rx="16" ry="30" transform="rotate(42)" />
-            <ellipse class="petal petal-floating" cx="24" cy="24" rx="16" ry="30" transform="rotate(84)" />
-            <ellipse class="petal alt petal-floating" cx="0" cy="54" rx="16" ry="30" transform="rotate(126)" />
-            <ellipse class="petal petal-floating" cx="-24" cy="24" rx="16" ry="30" transform="rotate(168)" />
-            <ellipse class="petal alt petal-floating" cx="-24" cy="-6" rx="16" ry="30" transform="rotate(-36)" />
-            <circle class="center" cx="0" cy="0" r="12" />
+          <!-- center -->
+          <circle class="center" cx="0" cy="0" r="7" />
+          <!-- a soft overlay petal for light shimmer -->
+          <g class="petal-glow" transform="translate(0,-4)">
+            <ellipse cx="0" cy="-28" rx="11" ry="20" fill="white" opacity="0.6"/>
           </g>
-        </g>
-      </g>
+        </symbol>
+      </defs>
     </svg>
 
-    <!-- decorative floating petals -->
-    <div id="floatingContainer" aria-hidden="true"></div>
+    <!-- main SVG where flower instances will be injected -->
+    <svg id="meadow" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
 
-    <!-- simple controls to change sway speed -->
-    <div class="controls" aria-hidden="false">
-      <label for="swayRange">Sway দ্রুততা</label>
-      <input id="swayRange" type="range" min="3" max="12" step="0.5" value="6" />
-      <button id="randomize">রঙ বদলাও</button>
+    <div class="ground" aria-hidden="true"></div>
+
+    <!-- controls -->
+    <div class="ui" role="region" aria-label="নিয়ন্ত্রণ">
+      <div>
+        <label for="count">ফুল সংখ্যা</label>
+        <input id="count" type="range" min="12" max="140" step="1" value="60" />
+        <span id="countVal">60</span>
+      </div>
+      <div style="margin-top:8px;">
+        <label for="intensity">বাতাস শক্তি</label>
+        <input id="intensity" type="range" min="0" max="2" step="0.05" value="0.9" />
+        <span id="intensityVal">0.9</span>
+        <button id="pauseBtn" aria-pressed="false"> Pause </button>
+      </div>
     </div>
   </div>
 
   <script>
-    // Create some small floating petals for visual depth
-    const floatingContainer = document.getElementById('floatingContainer');
-    const colors = ['#ff9fb1','#ffd6a5','#ffd25a','#c8f2e1','#b7e0ff'];
+    /* Configuration & Colors */
+    const COLORS = [
+      {petal1:'#e63946', petal2:'#ffb4a2', center:'#ffd166'}, // red
+      {petal1:'#ff6bcb', petal2:'#ffd1e8', center:'#ffd166'}, // pink
+      {petal1:'#7b2cbf', petal2:'#c77dff', center:'#ffd166'}, // purple
+      {petal1:'#60a5fa', petal2:'#bfe0ff', center:'#fff9c4'}, // sky
+      {petal1:'#1d4ed8', petal2:'#93c5fd', center:'#fff9c4'}, // blue
+      {petal1:'#ffffff', petal2:'#f0f4f8', center:'#ffd166'}  // white-ish
+    ];
 
-    function spawnFloatingPetals(n=8){
-      for(let i=0;i<n;i++){
-        const d = document.createElement('div');
-        d.className = 'floating-petal';
-        // random position near bottom
-        const left = 10 + Math.random()*80; // percent
-        d.style.left = left + '%';
-        d.style.bottom = (6 + Math.random()*6) + 'px';
-        d.style.width = (12 + Math.random()*18) + 'px';
-        d.style.height = (12 + Math.random()*18) + 'px';
-        d.style.background = colors[Math.floor(Math.random()*colors.length)];
-        d.style.opacity = 0.9 - Math.random()*0.4;
-        d.style.animationDuration = (8 + Math.random()*8) + 's';
-        d.style.transform = 'rotate(' + (Math.random()*360) + 'deg)';
-        floatingContainer.appendChild(d);
-        // remove after animation loop for memory safety and respawn
-        setTimeout(() => {
-          d.remove();
-          // respawn occasionally
-          setTimeout(()=> spawnFloatingPetals(1), 1200 + Math.random()*4000);
-        }, 12000 + Math.random()*6000);
+    const meadow = document.getElementById('meadow');
+    const template = document.getElementById('flowerTemplate');
+    const countRange = document.getElementById('count');
+    const countVal = document.getElementById('countVal');
+    const intensityRange = document.getElementById('intensity');
+    const intensityVal = document.getElementById('intensityVal');
+    const pauseBtn = document.getElementById('pauseBtn');
+
+    let paused = false;
+    let flowers = [];
+    let windPhase = 0; // degrees
+    let lastTime = performance.now();
+
+    // utility: map to viewport (1920x1080 base viewBox)
+    function vw(val){ return (val/100)*1920; }
+    function vh(val){ return (val/100)*1080; }
+
+    // create one flower instance with random parameters
+    function makeFlower(i, w, h){
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.classList.add('flower');
+      // choose color palette randomly
+      const pal = COLORS[Math.floor(Math.random()*COLORS.length)];
+      // clone template content
+      const use = document.createElementNS('http://www.w3.org/2000/svg','use');
+      use.setAttributeNS('http://www.w3.org/1999/xlink','href','#flowerTemplate');
+      // random position: lower 65% to bottom area
+      const x = Math.random() * w * 1.05; // allow small overflow
+      const y = (h*0.55) + Math.random() * (h*0.42);
+      // scale for depth (near: larger)
+      const depth = Math.random(); // 0..1
+      const scale = 0.6 + depth * 1.2; // 0.6 .. 1.8
+      // sway multiplier smaller for larger flowers
+      const swayMult = 0.8 + (1.2 - depth) * 1.4; // 0.8 .. ~2.2
+      // rotation base
+      const baseRot = (Math.random()*12 - 6);
+
+      // set transform
+      g.setAttribute('transform', `translate(${x.toFixed(2)} ${y.toFixed(2)}) scale(${scale.toFixed(3)}) rotate(${baseRot.toFixed(2)})`);
+      g.style.setProperty('--sway-mult', swayMult.toFixed(3));
+
+      // customize petal fill colors when inserted (querySelector won't on <use>, so we clone actual nodes)
+      // Instead of using <use>, we will import nodes from symbol for per-instance coloring:
+      const symbol = document.getElementById('flowerTemplate');
+      const frag = document.createDocumentFragment();
+      const nodes = symbol.cloneNode(true);
+      // nodes is <symbol> copy; extract children
+      const childElems = nodes.querySelectorAll('*');
+      childElems.forEach(node => {
+        const nn = node.cloneNode(true);
+        frag.appendChild(nn);
+      });
+      g.appendChild(frag);
+
+      // now set colors
+      const petals = g.querySelectorAll('.petal');
+      petals.forEach((p, idx)=>{
+        p.setAttribute('fill', (idx%2)? pal.petal2 : pal.petal1);
+        p.setAttribute('stroke', 'rgba(0,0,0,0.06)');
+        p.setAttribute('stroke-width', '0.8');
+        // add floating animation offset
+        p.classList.add('petal-floating');
+        p.style.animationDelay = (Math.random()*2)+'s';
+      });
+      const center = g.querySelector('.center');
+      if(center) center.setAttribute('fill', pal.center);
+
+      const leaf = g.querySelector('.leaf');
+      if(leaf) leaf.setAttribute('fill', 'rgba(46,125,50,0.95)');
+
+      // stagger bloom delay so not all bloom simultaneously
+      const bloomDelay = (i%7) * 80 + Math.random()*300;
+      g.querySelectorAll('.petal, .center').forEach(el=>{
+        el.style.animationDelay = (bloomDelay/1000)+'s';
+      });
+
+      // set an opacity variation by depth
+      g.style.opacity = (0.75 + depth*0.25).toString();
+
+      meadow.appendChild(g);
+
+      // store runtime meta
+      return {
+        node: g,
+        x, y, scale, baseRot, swayMult, depth
+      };
+    }
+
+    // create many flowers
+    function populate(count){
+      // clear existing
+      while(meadow.firstChild) meadow.removeChild(meadow.firstChild);
+      flowers = [];
+      // base viewbox dimensions (match viewBox)
+      const w = 1920, h = 1080;
+      for(let i=0;i<count;i++){
+        flowers.push(makeFlower(i,w,h));
       }
     }
-    spawnFloatingPetals(10);
 
-    // control sway speed
-    const swayRange = document.getElementById('swayRange');
-    swayRange.addEventListener('input', (e)=>{
-      const val = e.target.value; // seconds
-      document.documentElement.style.setProperty('--duration-sway', val + 's');
+    // animation loop: smooth wind using requestAnimationFrame updating CSS var
+    function rafLoop(t){
+      if(paused){ lastTime = t; requestAnimationFrame(rafLoop); return; }
+      const dt = (t - lastTime)/1000;
+      lastTime = t;
+      // wind speed from slider
+      const windStrength = parseFloat(intensityRange.value);
+      // slowly advance phase
+      windPhase += dt * 12 * windStrength; // degrees per second
+      // make it cyc
+      if(windPhase > 360) windPhase -= 360;
+      // compute a small oscillation value using sin for natural sway
+      const phaseRad = windPhase * Math.PI / 180;
+      const swayValue = Math.sin(phaseRad) * (6 * windStrength); // degrees to rotate
+      // apply as CSS variable (global)
+      document.documentElement.style.setProperty('--wind-phase', swayValue + 'deg');
+
+      // also apply small per-flower variance using transform updates (lightweight)
+      for(const f of flowers){
+        // derive local rotation from baseRot + global sway * local multiplier
+        // We will set transform via style to avoid expensive attribute set if not necessary:
+        const rot = f.baseRot + swayValue * f.swayMult * 0.6; // tuned multiplier
+        const tstr = `translate(${f.x.toFixed(2)} ${f.y.toFixed(2)}) scale(${f.scale.toFixed(3)}) rotate(${rot.toFixed(3)})`;
+        // only update if changed (simple)
+        if(f._lastT !== tstr){
+          f.node.setAttribute('transform', tstr);
+          f._lastT = tstr;
+        }
+      }
+
+      requestAnimationFrame(rafLoop);
+    }
+
+    // init
+    populate(parseInt(countRange.value,10));
+    requestAnimationFrame(rafLoop);
+
+    // UI wiring
+    countRange.addEventListener('input', (e)=>{
+      const v = parseInt(e.target.value,10);
+      countVal.textContent = v;
+      // rebuild with new count but keep performance: cap rebuild frequency
+      populate(v);
     });
 
-    // randomize palette
-    document.getElementById('randomize').addEventListener('click', ()=>{
-      const paletteSets = [
-        ['#ff9fb1','#ffd6a5','#ffd25a','#c8f2e1','#b7e0ff'],
-        ['#f7a8ff','#ffd1dc','#fff7a8','#cde7ff','#b8ffd9'],
-        ['#ffb3a7','#ffd1a7','#fff3b0','#e6ffe6','#cfe8ff'],
-        ['#e8c8ff','#ffd2f0','#ffd6a5','#fff2b6','#c8f2e1']
-      ];
-      const p = paletteSets[Math.floor(Math.random()*paletteSets.length)];
-      document.documentElement.style.setProperty('--petal1', p[0]);
-      document.documentElement.style.setProperty('--petal2', p[1]);
-      document.documentElement.style.setProperty('--center', p[2]);
-      // update floating petals color pool
-      for(let i=0;i<colors.length;i++) colors[i] = p[i%p.length];
+    intensityRange.addEventListener('input', (e)=>{
+      intensityVal.textContent = parseFloat(e.target.value).toFixed(2);
     });
 
-    // Accessibility: if prefers-reduced-motion, stop accidental heavy JS
+    pauseBtn.addEventListener('click', ()=>{
+      paused = !paused;
+      pauseBtn.textContent = paused ? ' Resume ' : ' Pause ';
+      pauseBtn.setAttribute('aria-pressed', String(paused));
+    });
+
+    // Resize handling: we used fixed viewBox, but for nicer layout we can update meadow viewBox to maintain center
+    window.addEventListener('resize', ()=>{
+      // nothing heavy needed: meadow SVG is responsive; could re-populate for different density if wanted
+    });
+
+    // Accessibility: if reduced-motion prefer, pause animations
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
     if(mq.matches){
-      // stop creating lots of floating petals
-      // clear existing
-      const kids = document.querySelectorAll('.floating-petal');
-      kids.forEach(k => k.remove());
+      paused = true;
+      pauseBtn.textContent = ' Resume ';
     }
+
+    // Hint: if you want more petals variation or larger flower types, extend the #flowerTemplate in the <symbol>.
   </script>
 </body>
 </html>
