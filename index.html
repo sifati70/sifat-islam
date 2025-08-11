@@ -1,118 +1,322 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="bn">
 <head>
-<title>Style Attribute Experiment</title>
-<style type="text/css">
-divi
-width:200px;
-height:200px;
-float: left;
-margin: 28px;
-padding: 30px;
-font-family: sans-serif;
-font-size: large;
-border: 4px solid rgba(0, 0, 0, 0.2);
-border-radius: 7px;
-text-align:
-center;
-10
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ফুলের অ্যানিমেশন</title>
+  <style>
+    :root{
+      --bg: linear-gradient(180deg, #f7fbff 0%, #e8f6f8 100%);
+      --stem: #3b8b59;
+      --leaf: #2e7d4a;
+      --petal1: #ff9fb1;
+      --petal2: #ffd6a5;
+      --center: #ffd25a;
+      --duration-sway: 6s;
+      --duration-bloom: 1.2s;
+      --petal-float: 8s;
+    }
+
+    /* Basic page layout */
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,"Noto Sans Bengali","Noto Sans",sans-serif;
+      background: var(--bg);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .scene{
+      width:min(920px, 95vw);
+      height:min(520px, 75vh);
+      position:relative;
+      overflow:hidden;
+      border-radius:18px;
+      box-shadow: 0 10px 30px rgba(30,60,90,0.08);
+      background:
+        radial-gradient(900px 400px at 10% 10%, rgba(255,255,255,0.6), transparent 20%),
+        radial-gradient(700px 300px at 90% 90%, rgba(255,255,255,0.5), transparent 20%),
+        transparent;
+      padding:20px;
+      box-sizing:border-box;
+    }
+
+    svg.flowers{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    /* stems */
+    .stem{
+      stroke: var(--stem);
+      stroke-width:6;
+      stroke-linecap:round;
+      fill:none;
+    }
+
+    /* leaves */
+    .leaf{
+      fill:var(--leaf);
+      transform-origin: center;
+      animation: leaf-sway var(--duration-sway) ease-in-out infinite;
+    }
+
+    /* petal common */
+    .petal{
+      transform-origin: center;
+      fill: var(--petal1);
+      transition: transform 300ms ease;
+      transform-box: fill-box;
+    }
+
+    .petal.alt{ fill: var(--petal2); }
+
+    .center{
+      fill: var(--center);
+      transform-origin: center;
+      transform-box: fill-box;
+      animation: center-pulse 2.5s ease-in-out infinite;
+    }
+
+    /* flower container sway */
+    .flower{
+      transform-origin: 50% 100%;
+      animation: sway calc(var(--duration-sway) * var(--sway-mult,1)) ease-in-out infinite;
+    }
+
+    /* bloom on load */
+    .flower .petal, .flower .center{
+      transform: scale(0.0);
+      opacity:0;
+      animation: bloom var(--duration-bloom) cubic-bezier(.2,.9,.2,1) forwards;
+    }
+
+    /* staggered bloom */
+    .flower:nth-child(1) .petal, .flower:nth-child(1) .center { animation-delay: 0.1s; }
+    .flower:nth-child(2) .petal, .flower:nth-child(2) .center { animation-delay: 0.4s; }
+    .flower:nth-child(3) .petal, .flower:nth-child(3) .center { animation-delay: 0.7s; }
+
+    /* gentle floating petals */
+    .petal-floating {
+      animation: petal-float var(--petal-float) ease-in-out infinite;
+    }
+
+    /* subtle leaf sway keyframes */
+    @keyframes leaf-sway{
+      0%{ transform: rotate(-6deg) }
+      50%{ transform: rotate(6deg) }
+      100%{ transform: rotate(-6deg) }
+    }
+
+    @keyframes sway{
+      0%{ transform: rotate(-4deg) translateY(0px); }
+      50%{ transform: rotate(4deg) translateY(-6px); }
+      100%{ transform: rotate(-4deg) translateY(0px); }
+    }
+
+    @keyframes bloom{
+      0%{ transform: scale(0.0); opacity:0; }
+      60%{ transform: scale(1.05); opacity:1; }
+      100%{ transform: scale(1); opacity:1; }
+    }
+
+    @keyframes center-pulse{
+      0%{ transform: scale(1); }
+      50%{ transform: scale(1.08); }
+      100%{ transform: scale(1); }
+    }
+
+    @keyframes petal-float{
+      0%{ transform: translateY(0px) rotate(0deg); }
+      25%{ transform: translateY(-4px) rotate(3deg); }
+      50%{ transform: translateY(0px) rotate(0deg); }
+      75%{ transform: translateY(3px) rotate(-2deg); }
+      100%{ transform: translateY(0px) rotate(0deg); }
+    }
+
+    /* small floating decorative petals */
+    .floating-petal {
+      position:absolute;
+      width:18px;
+      height:18px;
+      opacity:0.85;
+      border-radius:50% 40% 60% 50%;
+      transform-origin:center;
+      animation: float-away 10s linear infinite;
+      will-change: transform, opacity;
+    }
+
+    @keyframes float-away{
+      0%{ transform: translateY(0) translateX(0) rotate(0) scale(0.9); opacity:1; }
+      70%{ opacity:0.8; }
+      100%{ transform: translateY(-320px) translateX(80px) rotate(180deg) scale(0.6); opacity:0; }
+    }
+
+    /* accessibility: prefers reduced motion */
+    @media (prefers-reduced-motion: reduce){
+      .flower, .leaf, .petal, .center, .floating-petal { animation: none !important; transform:none !important; }
+    }
+
+    /* controls UI */
+    .controls{
+      position:absolute;
+      left:18px;
+      bottom:18px;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      background:rgba(255,255,255,0.7);
+      padding:8px 12px;
+      border-radius:10px;
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 18px rgba(20,40,60,0.06);
+      font-size:13px;
+    }
+    .controls label{ font-weight:600; margin-right:6px; color:#133; }
+    .controls input[type="range"]{ width:140px; }
+    .controls button{
+      border:0; background:#fff; padding:6px 10px; border-radius:8px; cursor:pointer;
+      box-shadow: 0 3px 8px rgba(20,40,60,0.06);
+    }
+  </style>
 </head>
 <body>
-<div style="background-color: pink; color: darkred
-There!</div>
-<div style="background-color: paleturquoise; color:
-forestgreen;">  Assalamualaikum</div> <div style="background-color: lightskyblue; color: royalblue; ">  Welcome Our Website </div>
-<p>
-———————————————————————————————————
-ST Tasin Subscribe to an Lyrical Bangla Urdu Arabic Islamic Song Channel to get the best of all Rasool Sa, Hamd, Islamic Songs
-———————————————————————————————————
-Humble Request:
-Dear 
-Please do not file a copyright strike or claim. 
-Please | Please | Please 🙏
+  <div class="scene" role="img" aria-label="ফুলের নরম অ্যানিমেশন দৃশ্য">
+    <!-- SVG flowers: each .flower is group with its own transform-origin at bottom -->
+    <svg class="flowers" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-hidden="false" focusable="false">
+      <!-- Ground hint -->
+      <ellipse cx="450" cy="490" rx="370" ry="28" fill="rgba(60,160,100,0.08)"></ellipse>
 
-IMPORTANT Request:
-If any artist, musician, producer or label has copyright
-issues with my videos (including, music, background music, artists and used images),
-Please comments bellow. We will remove it immediately
+      <!-- Flower 1 (left) -->
+      <g class="flower" style="--sway-mult:1.0; transform-origin: 180px 420px;">
+        <!-- stem path -->
+        <path class="stem" d="M180 520 C182 480, 190 440, 180 420" />
+        <!-- leaf -->
+        <path class="leaf" d="M185 475 C200 465, 210 470, 198 490 C188 505, 170 500, 185 475Z"/>
+        <!-- petals (a simple 6-petal flower) -->
+        <g transform="translate(180,410)">
+          <g>
+            <ellipse class="petal petal-floating" cx="0" cy="-28" rx="16" ry="28" />
+            <ellipse class="petal alt petal-floating" cx="22" cy="-10" rx="16" ry="28" transform="rotate(45)" />
+            <ellipse class="petal petal-floating" cx="22" cy="18" rx="16" ry="28" transform="rotate(90)" />
+            <ellipse class="petal alt petal-floating" cx="0" cy="36" rx="16" ry="28" transform="rotate(135)" />
+            <ellipse class="petal petal-floating" cx="-22" cy="18" rx="16" ry="28" transform="rotate(180)" />
+            <ellipse class="petal alt petal-floating" cx="-22" cy="-10" rx="16" ry="28" transform="rotate(-45)" />
+            <circle class="center" cx="0" cy="0" r="10" />
+          </g>
+        </g>
+      </g>
 
-▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-আসসালামু আলাইকুম প্রিয় ভিউয়ারস, উন্নত এবং সুন্দর ভিডিও মেকিং এর জন্য স্পন্সর এবং ডোনেশন একটা ফ্যাক্ট । আমাদের আয়োজনগুলো তৈরিতে এর শুন্যতা ভীষণ । আল্লাহর রহমত, নিজেদের প্রচেষ্টা এবং আপনাদের অব্যাহত ভালোবাসায় আমাদের এগিয়ে চলা  । আশাকরি আপনার সুযোগ থাকলে ভিডিও তৈরিতে স্পন্সর অথবা ডোনেট করে এ পথচলাকে বেগবান করবেন ইনশাআল্লাহ 
-Email: info.sttasin@gmail.com
-Whatsapp: 01989714685
-▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-Fair Use Disclaimer:
+      <!-- Flower 2 (center, taller) -->
+      <g class="flower" style="--sway-mult:1.2; transform-origin: 460px 400px;">
+        <path class="stem" d="M460 520 C458 480, 462 440, 460 400" />
+        <path class="leaf" d="M455 460 C440 450, 430 460, 445 480 C455 495, 470 490, 455 460Z"/>
+        <g transform="translate(460,360) scale(1.2)">
+          <g>
+            <ellipse class="petal alt petal-floating" cx="0" cy="-36" rx="20" ry="36" />
+            <ellipse class="petal petal-floating" cx="30" cy="-8" rx="20" ry="36" transform="rotate(45)" />
+            <ellipse class="petal alt petal-floating" cx="30" cy="28" rx="20" ry="36" transform="rotate(90)" />
+            <ellipse class="petal petal-floating" cx="0" cy="64" rx="20" ry="36" transform="rotate(135)" />
+            <ellipse class="petal alt petal-floating" cx="-30" cy="28" rx="20" ry="36" transform="rotate(180)" />
+            <ellipse class="petal petal-floating" cx="-30" cy="-8" rx="20" ry="36" transform="rotate(-45)" />
+            <circle class="center" cx="0" cy="0" r="14" />
+          </g>
+        </g>
+      </g>
 
-For Bangladeshi Contents: This channel may use some copyrighted materials without specific authorization of the owner but contents
-used here falls under the "Fair Use" as described in The Copyright Act 2000 Law No. 28 of the year 2000
-of Bangladesh under Chapter 6, Section 36 and Chapter 13 Section 72.
-According to that law allowance is made for "fair use"for purposes such as criticism, comment, news reporting, teaching,
-scholarship, and research.
-Fair use is a use permitted by copyright statute that might otherwise be infringing. Non-profit, educational or personal use tips the balance in favor of fair use.
+      <!-- Flower 3 (right) -->
+      <g class="flower" style="--sway-mult:0.85; transform-origin: 720px 430px;">
+        <path class="stem" d="M720 520 C722 480, 730 440, 720 430" />
+        <path class="leaf" d="M725 470 C740 460, 750 465, 738 485 C728 500, 710 495, 725 470Z"/>
+        <g transform="translate(720,410) scale(0.9)">
+          <g>
+            <ellipse class="petal petal-floating" cx="0" cy="-30" rx="16" ry="30" />
+            <ellipse class="petal alt petal-floating" cx="24" cy="-6" rx="16" ry="30" transform="rotate(42)" />
+            <ellipse class="petal petal-floating" cx="24" cy="24" rx="16" ry="30" transform="rotate(84)" />
+            <ellipse class="petal alt petal-floating" cx="0" cy="54" rx="16" ry="30" transform="rotate(126)" />
+            <ellipse class="petal petal-floating" cx="-24" cy="24" rx="16" ry="30" transform="rotate(168)" />
+            <ellipse class="petal alt petal-floating" cx="-24" cy="-6" rx="16" ry="30" transform="rotate(-36)" />
+            <circle class="center" cx="0" cy="0" r="12" />
+          </g>
+        </g>
+      </g>
+    </svg>
 
-Please-Don't forget to
+    <!-- decorative floating petals -->
+    <div id="floatingContainer" aria-hidden="true"></div>
 
-Like 👍|| Comment 💬|| Share⏩  || ▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄
-বাংলা গজল
-নতুন ইসলামী গান
-হাসবি রাব্বি জাল্লাল্লাহ মাফি কলবি গইরুল্লাহ্
-mahe ramjan
-Bangla viral Gojol 
-nurani seyava
-best Islamic naat
-virel Islamic video
-tere sadke me aaka sare jahako din mela
-2025 heart touching naat
-2025 new heart touching beautiful naat sharif - hasbi rabbi - huda sisters - hi-tech islamic naat....
-hasbi rabbi jallallah lyrics
-romjaner gojol 2024 abu rayhan
-gojol 2024
-abu rayhan gojol sunte chai
-abu rayhan gojol 2023
-কলরবের নতুন গজল ২০২৪
-আবু রায়হানের নতুন গজল
-হৃদয় ছুঁয়ে যাওয়া অসাধারন 
-কয়েকটি নতুন গজল
-২০২৪ সালের নতুন গজল
-আরবি ভাষার গজল 
-উর্দু গজল 
-হিন্দি গজল
-মাহে রমজানের নতুন গজল
-পাকিস্তানি গজল
-হতাম যদি নাম না জানা ফুল
-আমাকে দাও পাখির দুটো ডানা
-ফাজলে ইলাহী সাকিব
-আহনাফ খালিদ
-নেই কেহ নেই আল্লাহ ছাড়া
-খুলে দাও হৃদয়ের বন্ধ দুয়ার
-২০২৪ সালের সেরা গজল
-মিজানুর রহমান আজহারী
-সেরা ওয়াজ
-হযরত মুহাম্মদ সাল্লাল্লাহু আলাইহি ওয়াসাল্লাম
-আমাদের প্রিয় নবী
-holy Tune 
-holy step
-heaven tune 
-holy sound
-Islamic song tv 
-tune hut
-fillings of tune
-তাওহীদ জামিল কলরব
-মুফতী সাঈদ আহমাদ কলরব
-বদরুজ্জামান কলরব
-আবু রায়হান কলরব
-হুসাইন আদনান কলরব
-আবির হাসান কলরব
-আহমাদ আব্দুল্লাহ কলরব
-আহনাফ খালিদ কলরব
-ফাজলে ইলাহী সাকিব কলরব
-अल्लाहू अक़बर
-कलरब ‌ २०२१
-नरेंद्र मोदी के साथ नई ग़ज़ल 2024
-gazal bangla gojol, gazal bangla gojol video, hindi gazal bangla gojol, bangla gojol islamic gazal, gazal bangla notun gojol, ma fatema gojol bangla gazal, bangla gojol bangladeshi bangla gazal, gojol sunbo bangla gazal, bangla gojol 2024 bangla gazal, sundar sundar gojol bangla gazal, gazal bangla 
+    <!-- simple controls to change sway speed -->
+    <div class="controls" aria-hidden="false">
+      <label for="swayRange">Sway দ্রুততা</label>
+      <input id="swayRange" type="range" min="3" max="12" step="0.5" value="6" />
+      <button id="randomize">রঙ বদলাও</button>
+    </div>
+  </div>
 
-#st_tasin </p>
+  <script>
+    // Create some small floating petals for visual depth
+    const floatingContainer = document.getElementById('floatingContainer');
+    const colors = ['#ff9fb1','#ffd6a5','#ffd25a','#c8f2e1','#b7e0ff'];
+
+    function spawnFloatingPetals(n=8){
+      for(let i=0;i<n;i++){
+        const d = document.createElement('div');
+        d.className = 'floating-petal';
+        // random position near bottom
+        const left = 10 + Math.random()*80; // percent
+        d.style.left = left + '%';
+        d.style.bottom = (6 + Math.random()*6) + 'px';
+        d.style.width = (12 + Math.random()*18) + 'px';
+        d.style.height = (12 + Math.random()*18) + 'px';
+        d.style.background = colors[Math.floor(Math.random()*colors.length)];
+        d.style.opacity = 0.9 - Math.random()*0.4;
+        d.style.animationDuration = (8 + Math.random()*8) + 's';
+        d.style.transform = 'rotate(' + (Math.random()*360) + 'deg)';
+        floatingContainer.appendChild(d);
+        // remove after animation loop for memory safety and respawn
+        setTimeout(() => {
+          d.remove();
+          // respawn occasionally
+          setTimeout(()=> spawnFloatingPetals(1), 1200 + Math.random()*4000);
+        }, 12000 + Math.random()*6000);
+      }
+    }
+    spawnFloatingPetals(10);
+
+    // control sway speed
+    const swayRange = document.getElementById('swayRange');
+    swayRange.addEventListener('input', (e)=>{
+      const val = e.target.value; // seconds
+      document.documentElement.style.setProperty('--duration-sway', val + 's');
+    });
+
+    // randomize palette
+    document.getElementById('randomize').addEventListener('click', ()=>{
+      const paletteSets = [
+        ['#ff9fb1','#ffd6a5','#ffd25a','#c8f2e1','#b7e0ff'],
+        ['#f7a8ff','#ffd1dc','#fff7a8','#cde7ff','#b8ffd9'],
+        ['#ffb3a7','#ffd1a7','#fff3b0','#e6ffe6','#cfe8ff'],
+        ['#e8c8ff','#ffd2f0','#ffd6a5','#fff2b6','#c8f2e1']
+      ];
+      const p = paletteSets[Math.floor(Math.random()*paletteSets.length)];
+      document.documentElement.style.setProperty('--petal1', p[0]);
+      document.documentElement.style.setProperty('--petal2', p[1]);
+      document.documentElement.style.setProperty('--center', p[2]);
+      // update floating petals color pool
+      for(let i=0;i<colors.length;i++) colors[i] = p[i%p.length];
+    });
+
+    // Accessibility: if prefers-reduced-motion, stop accidental heavy JS
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if(mq.matches){
+      // stop creating lots of floating petals
+      // clear existing
+      const kids = document.querySelectorAll('.floating-petal');
+      kids.forEach(k => k.remove());
+    }
+  </script>
 </body>
 </html>
