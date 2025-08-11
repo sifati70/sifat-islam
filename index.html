@@ -1,189 +1,82 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="bn">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>ফুলবাগান — Fixed</title>
-<style>
-  :root{ --sun-x:85%; --sun-y:12%; --sun-size:380px; }
-  html,body{height:100%;margin:0;background:linear-gradient(#fffdf7,#eaf7ff);overflow:hidden;font-family:system-ui,-apple-system,"Noto Sans Bengali",sans-serif}
-  .garden{position:fixed;inset:0;}
-  .sun{position:absolute;left:var(--sun-x);top:var(--sun-y);width:var(--sun-size);height:var(--sun-size);transform:translate(-50%,-50%);border-radius:50%;
-       background:radial-gradient(circle at 35% 30%, rgba(255,246,200,0.95) 0%, rgba(255,235,150,0.6) 20%, rgba(255,190,80,0.14) 45%, transparent 70%);
-       filter:blur(20px);mix-blend-mode:screen;pointer-events:none;z-index:2}
-  svg#meadow{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;display:block}
-  .ui{position:fixed;right:16px;top:16px;background:rgba(255,255,255,0.85);padding:8px;border-radius:10px;backdrop-filter:blur(6px);z-index:6}
-  .ui input[type=range]{width:140px}
-  .flower{transform-origin:center bottom;will-change:transform,opacity;pointer-events:none}
-  .petal{filter:drop-shadow(0 2px 6px rgba(0,0,0,0.12));}
-  @keyframes bloom{0%{transform:scale(0);opacity:0}60%{transform:scale(1.06);opacity:1}100%{transform:scale(1);opacity:1}}
-  @media (prefers-reduced-motion:reduce){ *{animation:none !important;transition:none !important} }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ফুলের বাগানের অ্যানিমেশন</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(to top, #a8edea, #fed6e3);
+      overflow: hidden;
+      height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .garden {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(to top, #5cb85c 0%, #a2d149 60%, #8bc34a 90%);
+    }
+
+    /* ফুল ও পাতা জন্য কন্টেইনার */
+    .flower {
+      position: absolute;
+      font-size: 30px;
+      user-select: none;
+      animation: floatUp 8s linear infinite;
+      opacity: 0.9;
+    }
+
+    /* ফুলের নড়াচড়া এ্যানিমেশন */
+    @keyframes floatUp {
+      0% {
+        transform: translateY(100vh) translateX(0) rotate(0deg);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-10vh) translateX(50px) rotate(360deg);
+        opacity: 0;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="garden">
-    <div class="sun" aria-hidden="true"></div>
-    <svg id="meadow" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true"></svg>
+  <div class="garden" id="garden"></div>
 
-    <div class="ui" role="region" aria-label="controls">
-      <div>
-        <label>ফুল সংখ্যা</label>
-        <input id="count" type="range" min="6" max="140" value="60" />
-        <span id="countVal">60</span>
-      </div>
-      <div style="margin-top:8px">
-        <label>বাতাস</label>
-        <input id="wind" type="range" min="0" max="2" step="0.05" value="0.9" />
-        <span id="windVal">0.90</span>
-        <button id="pause">Pause</button>
-      </div>
-    </div>
-  </div>
+  <script>
+    const garden = document.getElementById('garden');
 
-<script>
-/* COLORS */
-const PALETTES = [
-  {p1:'#e63946', p2:'#ffb4a2', c:'#ffd166'},
-  {p1:'#ff6bcb', p2:'#ffd1e8', c:'#ffd166'},
-  {p1:'#7b2cbf', p2:'#c77dff', c:'#ffd166'},
-  {p1:'#60a5fa', p2:'#bfe0ff', c:'#fff9c4'},
-  {p1:'#1d4ed8', p2:'#93c5fd', c:'#fff9c4'},
-  {p1:'#ffffff', p2:'#f0f4f8', c:'#ffd166'}
-];
+    // ফুল ও অন্যান্য উপাদানের ইমোজি লিস্ট
+    const emojis = ['💐', '🌹', '🥀', '🌺', '🌷', '🌸', '💮', '🏵️', '🌻', '🌼', '🍂', '🍁', '🍄', '🌾', '🌿'];
 
-const meadow = document.getElementById('meadow');
-const countRange = document.getElementById('count');
-const countVal = document.getElementById('countVal');
-const windRange = document.getElementById('wind');
-const windVal = document.getElementById('windVal');
-const pauseBtn = document.getElementById('pause');
-
-let flowers = [], paused=false, windPhase=0, lastTime=performance.now();
-
-/* helper to create SVG element easily */
-function svg(tag, attrs={}){
-  const ns="http://www.w3.org/2000/svg";
-  const el = document.createElementNS(ns, tag);
-  for(const k in attrs) el.setAttribute(k, attrs[k]);
-  return el;
-}
-
-/* create a single flower (simple paths built as string to avoid symbol complexity) */
-function makeFlower(i, w=1920, h=1080){
-  const g = svg('g',{class:'flower'});
-  // random palette
-  const pal = PALETTES[Math.floor(Math.random()*PALETTES.length)];
-  // position: x across width, y in lower half
-  const x = Math.random()*w;
-  const y = (h*0.55) + Math.random()*(h*0.42);
-  const depth = Math.random(); // 0..1
-  const scale = 0.6 + depth*1.2;
-  const baseRot = (Math.random()*12 - 6);
-  const swayMult = 0.8 + (1.2 - depth)*1.4;
-
-  g.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${scale.toFixed(3)}) rotate(${baseRot.toFixed(2)})`);
-  g.dataset.x = x; g.dataset.y = y; g.dataset.scale = scale; g.dataset.rot = baseRot; g.dataset.sway = swayMult;
-
-  // stem
-  const stem = svg('path',{d:'M0 52 C -2 30, -6 18, 0 0', class:'stem', stroke:'rgba(45,100,60,0.95)', 'stroke-width':3.4, fill:'none'});
-  g.appendChild(stem);
-
-  // leaf
-  const leaf = svg('path',{d:'M-4 30 C -22 20, -28 34, -10 40 C -2 42, 2 36, -4 30Z', class:'leaf', fill:'rgba(46,125,50,0.95)'});
-  g.appendChild(leaf);
-
-  // petals: 6 petals
-  const petPositions = [
-    {cx:0, cy:-28, rot:0},
-    {cx:20, cy:-8, rot:40},
-    {cx:20, cy:20, rot:80},
-    {cx:0, cy:44, rot:120},
-    {cx:-20, cy:20, rot:160},
-    {cx:-20, cy:-8, rot:-40}
-  ];
-  petPositions.forEach((p, idx)=>{
-    const pet = svg('ellipse',{cx:p.cx, cy:p.cy, rx:12, ry:22, transform:`rotate(${p.rot} ${p.cx} ${p.cy})`, class:'petal'});
-    const fill = (idx%2)? pal.p2 : pal.p1;
-    pet.setAttribute('fill', fill);
-    pet.setAttribute('stroke','rgba(0,0,0,0.06)');
-    pet.setAttribute('stroke-width',0.8);
-    // bloom animation stagger
-    pet.style.animation = `bloom 900ms cubic-bezier(.2,.9,.2,1) forwards`;
-    pet.style.animationDelay = ((i%7)*80 + Math.random()*200) + 'ms';
-    pet.style.opacity = '0';
-    g.appendChild(pet);
-  });
-
-  // center
-  const center = svg('circle',{cx:0, cy:0, r:7, class:'center', fill: pal.c});
-  center.style.animation = `bloom 900ms cubic-bezier(.2,.9,.2,1) forwards`;
-  center.style.animationDelay = ((i%7)*80 + Math.random()*200) + 'ms';
-  center.style.opacity = '0';
-  g.appendChild(center);
-
-  meadow.appendChild(g);
-  return g;
-}
-
-/* populate many */
-function populate(n){
-  // clear
-  meadow.innerHTML = '';
-  flowers = [];
-  const w = 1920, h = 1080;
-  for(let i=0;i<n;i++){
-    flowers.push(makeFlower(i,w,h));
-  }
-}
-
-/* animation RAF: apply global sway and per-flower transform */
-function loop(t){
-  if(!paused){
-    const dt = (t-lastTime)/1000; lastTime = t;
-    const windStrength = parseFloat(windRange.value);
-    windPhase += dt * 12 * windStrength;
-    if(windPhase>360) windPhase -= 360;
-    const sway = Math.sin(windPhase * Math.PI/180) * (6 * windStrength);
-    // set CSS var for debugging if needed
-    document.documentElement.style.setProperty('--wind-phase', sway + 'deg');
-    // update each flower transform
-    for(const g of flowers){
-      const x = parseFloat(g.dataset.x);
-      const y = parseFloat(g.dataset.y);
-      const scale = parseFloat(g.dataset.scale);
-      const base = parseFloat(g.dataset.rot);
-      const sMult = parseFloat(g.dataset.sway);
-      const rot = base + sway * sMult * 0.6;
-      g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${scale.toFixed(3)}) rotate(${rot.toFixed(3)})`);
+    function random(min, max) {
+      return Math.random() * (max - min) + min;
     }
-  } else {
-    lastTime = t;
-  }
-  requestAnimationFrame(loop);
-}
 
-/* initial */
-populate(parseInt(countRange.value,10));
-requestAnimationFrame(loop);
+    function createFlower() {
+      const flower = document.createElement('div');
+      flower.classList.add('flower');
+      flower.style.left = random(0, 100) + 'vw'; // ফুলের ডান/বাম পজিশন
+      flower.style.fontSize = random(20, 50) + 'px'; // ফুলের সাইজ
+      flower.style.animationDuration = random(6, 12) + 's'; // এ্যানিমেশনের গতি
+      flower.style.animationTimingFunction = 'linear';
+      flower.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      garden.appendChild(flower);
 
-/* UI wiring */
-countRange.addEventListener('input',(e)=>{
-  countVal.textContent = e.target.value;
-  populate(parseInt(e.target.value,10));
-});
-windRange.addEventListener('input',(e)=>{
-  windVal.textContent = parseFloat(e.target.value).toFixed(2);
-});
-pauseBtn.addEventListener('click',()=>{
-  paused = !paused;
-  pauseBtn.textContent = paused ? 'Resume' : 'Pause';
-});
+      // ১২ সেকেন্ড পর ফুল মুছে ফেলা হবে
+      setTimeout(() => {
+        flower.remove();
+      }, 12000);
+    }
 
-/* If user prefers reduced motion, pause */
-if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-  paused = true; pauseBtn.textContent = 'Resume';
-}
-<title> Create by SIFAT ISLAM </title>
-</script>
+    // প্রতি ০.৫ সেকেন্ডে নতুন ফুল তৈরি হবে
+    setInterval(createFlower, 500);
+  </script>
 </body>
 </html>
