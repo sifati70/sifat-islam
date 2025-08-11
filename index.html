@@ -2,81 +2,114 @@
 <html lang="bn">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ফুলের বাগানের অ্যানিমেশন</title>
+  <title>3D ফুলের মাঠ ড্রোন ভিউ | Three.js</title>
   <style>
-    body {
-      margin: 0;
-      background: linear-gradient(to top, #a8edea, #fed6e3);
-      overflow: hidden;
-      height: 100vh;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    body, html {
+      margin: 0; padding: 0; overflow: hidden; height: 100%;
+      background: #87CEEB; /* আকাশের নীল রং */
+      font-family: sans-serif;
     }
-
-    .garden {
-      position: relative;
-      width: 100%;
-      height: 100vh;
-      overflow: hidden;
-      background: linear-gradient(to top, #5cb85c 0%, #a2d149 60%, #8bc34a 90%);
-    }
-
-    /* ফুল ও পাতা জন্য কন্টেইনার */
-    .flower {
-      position: absolute;
-      font-size: 30px;
-      user-select: none;
-      animation: floatUp 8s linear infinite;
-      opacity: 0.9;
-    }
-
-    /* ফুলের নড়াচড়া এ্যানিমেশন */
-    @keyframes floatUp {
-      0% {
-        transform: translateY(100vh) translateX(0) rotate(0deg);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-10vh) translateX(50px) rotate(360deg);
-        opacity: 0;
-      }
+    #container {
+      width: 100vw; height: 100vh;
+      display: block;
     }
   </style>
 </head>
 <body>
-  <div class="garden" id="garden"></div>
+  <div id="container"></div>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 
   <script>
-    const garden = document.getElementById('garden');
+    // Scene, Camera, Renderer
+    const scene = new THREE.Scene();
 
-    // ফুল ও অন্যান্য উপাদানের ইমোজি লিস্ট
-    const emojis = ['💐', '🌹', '🥀', '🌺', '🌷', '🌸', '💮', '🏵️', '🌻', '🌼', '🍂', '🍁', '🍄', '🌾', '🌿'];
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+    camera.position.set(0, 30, 70);
+    camera.lookAt(0, 0, 0);
 
-    function random(min, max) {
-      return Math.random() * (max - min) + min;
+    const renderer = new THREE.WebGLRenderer({antialias: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('container').appendChild(renderer.domElement);
+
+    // মাটি (গ্রাউন্ড)
+    const groundGeo = new THREE.PlaneGeometry(200, 200);
+    const groundMat = new THREE.MeshLambertMaterial({color: 0x228B22});
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    // আলো (সূর্য)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+    directionalLight.position.set(30, 100, 40);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+
+    // ambient light
+    const ambientLight = new THREE.AmbientLight(0x555555);
+    scene.add(ambientLight);
+
+    // ফুলের সিম্পল মডেল (স্টেম + গোলাপ)
+    function createFlower(x, z) {
+      const flowerGroup = new THREE.Group();
+
+      // স্টেম
+      const stemGeo = new THREE.CylinderGeometry(0.1, 0.1, 3, 8);
+      const stemMat = new THREE.MeshLambertMaterial({color: 0x006400});
+      const stem = new THREE.Mesh(stemGeo, stemMat);
+      stem.position.y = 1.5;
+      flowerGroup.add(stem);
+
+      // ফুলের অংশ (গোলাপের মতো গোলক)
+      const flowerGeo = new THREE.SphereGeometry(0.5, 16, 16);
+      const flowerMat = new THREE.MeshLambertMaterial({color: 0xff69b4});
+      const flower = new THREE.Mesh(flowerGeo, flowerMat);
+      flower.position.y = 3;
+      flowerGroup.add(flower);
+
+      flowerGroup.position.set(x, 0, z);
+      scene.add(flowerGroup);
     }
 
-    function createFlower() {
-      const flower = document.createElement('div');
-      flower.classList.add('flower');
-      flower.style.left = random(0, 100) + 'vw'; // ফুলের ডান/বাম পজিশন
-      flower.style.fontSize = random(20, 50) + 'px'; // ফুলের সাইজ
-      flower.style.animationDuration = random(6, 12) + 's'; // এ্যানিমেশনের গতি
-      flower.style.animationTimingFunction = 'linear';
-      flower.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-      garden.appendChild(flower);
-
-      // ১২ সেকেন্ড পর ফুল মুছে ফেলা হবে
-      setTimeout(() => {
-        flower.remove();
-      }, 12000);
+    // ফুলের মাঠ তৈরি (বিভিন্ন জায়গায় ছড়িয়ে)
+    for (let x = -80; x <= 80; x += 5) {
+      for (let z = -80; z <= 80; z += 5) {
+        if (Math.random() > 0.4) {
+          createFlower(x + Math.random()*2, z + Math.random()*2);
+        }
+      }
     }
 
-    // প্রতি ০.৫ সেকেন্ডে নতুন ফুল তৈরি হবে
-    setInterval(createFlower, 500);
+    // ক্যামেরার ড্রোন মুভমেন্ট (ধীরে সামনে আসা, একটু ওঠা-নামা)
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      let t = clock.getElapsedTime();
+
+      camera.position.z = 70 - t * 5; // সামনে আসা
+      camera.position.y = 30 + Math.sin(t * 0.5) * 3; // ওঠা-নামা
+
+      if (camera.position.z < -30) {
+        camera.position.z = 70; // রিসেট করে পুনরায় শুরু
+      }
+
+      camera.lookAt(0, 0, 0);
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // উইন্ডো রিসাইজ হ্যান্ডেল
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
   </script>
 </body>
 </html>
