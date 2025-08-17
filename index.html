@@ -1,115 +1,43 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
-  <meta charset="UTF-8" />
-  <title>3D ফুলের মাঠ ড্রোন ভিউ | Three.js</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>আমার ছবি</title>
   <style>
-    body, html {
-      margin: 0; padding: 0; overflow: hidden; height: 100%;
-      background: #87CEEB; /* আকাশের নীল রং */
-      font-family: sans-serif;
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f8ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
     }
-    #container {
-      width: 100vw; height: 100vh;
-      display: block;
+    .photo-container {
+      text-align: center;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .photo-container img {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 10px;
+      border: 2px solid #ddd;
+    }
+    .caption {
+      margin-top: 15px;
+      font-size: 18px;
+      color: #333;
     }
   </style>
 </head>
 <body>
-  <div id="container"></div>
-
-  <!-- Three.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-
-  <script>
-    // Scene, Camera, Renderer
-    const scene = new THREE.Scene();
-
-    const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
-    camera.position.set(0, 30, 70);
-    camera.lookAt(0, 0, 0);
-
-    const renderer = new THREE.WebGLRenderer({antialias: true});
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('container').appendChild(renderer.domElement);
-
-    // মাটি (গ্রাউন্ড)
-    const groundGeo = new THREE.PlaneGeometry(200, 200);
-    const groundMat = new THREE.MeshLambertMaterial({color: 0x228B22});
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // আলো (সূর্য)
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-    directionalLight.position.set(30, 100, 40);
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
-
-    // ambient light
-    const ambientLight = new THREE.AmbientLight(0x555555);
-    scene.add(ambientLight);
-
-    // ফুলের সিম্পল মডেল (স্টেম + গোলাপ)
-    function createFlower(x, z) {
-      const flowerGroup = new THREE.Group();
-
-      // স্টেম
-      const stemGeo = new THREE.CylinderGeometry(0.1, 0.1, 3, 8);
-      const stemMat = new THREE.MeshLambertMaterial({color: 0x006400});
-      const stem = new THREE.Mesh(stemGeo, stemMat);
-      stem.position.y = 1.5;
-      flowerGroup.add(stem);
-
-      // ফুলের অংশ (গোলাপের মতো গোলক)
-      const flowerGeo = new THREE.SphereGeometry(0.5, 16, 16);
-      const flowerMat = new THREE.MeshLambertMaterial({color: 0xff69b4});
-      const flower = new THREE.Mesh(flowerGeo, flowerMat);
-      flower.position.y = 3;
-      flowerGroup.add(flower);
-
-      flowerGroup.position.set(x, 0, z);
-      scene.add(flowerGroup);
-    }
-
-    // ফুলের মাঠ তৈরি (বিভিন্ন জায়গায় ছড়িয়ে)
-    for (let x = -80; x <= 80; x += 5) {
-      for (let z = -80; z <= 80; z += 5) {
-        if (Math.random() > 0.4) {
-          createFlower(x + Math.random()*2, z + Math.random()*2);
-        }
-      }
-    }
-
-    // ক্যামেরার ড্রোন মুভমেন্ট (ধীরে সামনে আসা, একটু ওঠা-নামা)
-    let clock = new THREE.Clock();
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      let t = clock.getElapsedTime();
-
-      camera.position.z = 70 - t * 5; // সামনে আসা
-      camera.position.y = 30 + Math.sin(t * 0.5) * 3; // ওঠা-নামা
-
-      if (camera.position.z < -30) {
-        camera.position.z = 70; // রিসেট করে পুনরায় শুরু
-      }
-
-      camera.lookAt(0, 0, 0);
-
-      renderer.render(scene, camera);
-    }
-
-    animate();
-
-    // উইন্ডো রিসাইজ হ্যান্ডেল
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
+  <div class="photo-container">
+    <img src="photo.jpg" alt="আমার ছবি">
+    <div class="caption">আলহামদুলিল্লাহ 🌿</div>
+  </div>
 </body>
 </html>
