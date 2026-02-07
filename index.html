@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Premium QR Code Generator</title>
+<title>Pro QR Code Generator</title>
 
 <style>
 :root{
-  --primary:#4f46e5;
-  --bg:#0f172a;
+  --primary:#6366f1;
+  --bg:#020617;
   --card:#020617;
+  --border:#1e293b;
   --text:#e5e7eb;
 }
 *{box-sizing:border-box;font-family:'Segoe UI',sans-serif}
@@ -21,40 +22,49 @@ body{
   padding:20px;
 }
 
-.container{
-  max-width:900px;
-  margin:auto;
+.container{max-width:950px;margin:auto}
+
+.card{
+  background:rgba(255,255,255,0.03);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  margin-bottom:20px;
 }
 
+/* Header */
 .header{
   display:flex;
   align-items:center;
   gap:15px;
-  margin-bottom:20px;
 }
 
-.header img{
-  width:60px;
-  height:60px;
+.avatar{
+  width:70px;
+  height:70px;
   border-radius:50%;
-  object-fit:cover;
-  border:2px solid var(--primary);
+  background:linear-gradient(135deg,#6366f1,#22d3ee);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:26px;
+  font-weight:bold;
+  color:white;
+  overflow:hidden;
 }
 
-.header input{
+.avatar img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+.header input[type="text"]{
+  font-size:22px;
   background:none;
   border:none;
   color:white;
-  font-size:22px;
   outline:none;
-}
-
-.card{
-  background:rgba(255,255,255,0.03);
-  border-radius:16px;
-  padding:20px;
-  margin-bottom:20px;
-  box-shadow:0 0 30px rgba(0,0,0,0.4);
 }
 
 input,button{
@@ -69,51 +79,58 @@ input,button{
 input{
   background:#020617;
   color:white;
-  border:1px solid #1e293b;
+  border:1px solid var(--border);
 }
 
 button{
   background:var(--primary);
   color:white;
   cursor:pointer;
-  transition:.3s;
 }
 button:hover{opacity:.9}
 
-.qr-preview{
-  text-align:center;
-  margin-top:20px;
-}
-
+.qr-preview{text-align:center;margin-top:20px}
 .qr-preview img{
-  max-width:200px;
-  margin-top:10px;
-  border-radius:10px;
+  max-width:220px;
   background:white;
   padding:10px;
+  border-radius:12px;
 }
 
-.history-item{
-  display:flex;
+/* History */
+.history{
+  max-height:350px;
+  overflow:auto;
+}
+
+.history-card{
+  display:grid;
+  grid-template-columns:40px 70px 1fr auto;
   align-items:center;
-  justify-content:space-between;
   gap:10px;
+  padding:12px;
+  border-radius:12px;
   background:#020617;
-  padding:10px;
-  border-radius:10px;
-  margin-top:10px;
+  border:1px solid var(--border);
+  margin-bottom:10px;
 }
 
-.history-item img{
+.history-card img{
   width:60px;
   background:white;
   padding:5px;
   border-radius:8px;
 }
 
-.small-btn{
-  padding:8px 12px;
-  font-size:14px;
+.history-card small{
+  color:#94a3b8;
+  display:block;
+}
+
+.actions button{
+  padding:6px 10px;
+  font-size:13px;
+  margin-left:5px;
 }
 </style>
 </head>
@@ -121,78 +138,88 @@ button:hover{opacity:.9}
 <body>
 <div class="container">
 
-  <!-- Header -->
-  <div class="header card">
-    <img id="profilePic" src="https://via.placeholder.com/100">
-    <div>
-      <input id="username" placeholder="Your Name">
-      <input type="file" id="profileUpload" accept="image/*">
-    </div>
+<!-- Header -->
+<div class="card header">
+  <div class="avatar" id="avatar">SI</div>
+  <div>
+    <input id="username" type="text" value="Sifat Islam">
+    <input type="file" id="profileUpload" accept="image/*">
   </div>
+</div>
 
-  <!-- Generator -->
-  <div class="card">
-    <h2>QR Code Generator</h2>
-    <input id="qrText" placeholder="এখানে টেক্সট লিখুন">
-    <button onclick="generateQR()">Generate QR</button>
+<!-- Generator -->
+<div class="card">
+  <h2>QR Code Generator</h2>
+  <input id="qrText" placeholder="এখানে যেকোনো টেক্সট / লিংক লিখুন">
+  <button onclick="generateQR()">Generate QR</button>
 
-    <div class="qr-preview" id="preview" style="display:none;">
-      <img id="qrImage">
-      <br>
-      <button class="small-btn" onclick="downloadQR()">Download</button>
-    </div>
+  <div class="qr-preview" id="preview" style="display:none;">
+    <img id="qrImage">
+    <br><br>
+    <button onclick="downloadQR()">Download QR</button>
   </div>
+</div>
 
-  <!-- History -->
-  <div class="card">
-    <h3>History</h3>
-    <div id="history"></div>
-  </div>
+<!-- History -->
+<div class="card">
+  <h3>QR History</h3>
+  <div class="history" id="history"></div>
+</div>
 
 </div>
 
 <script>
-const qrImage = document.getElementById('qrImage');
-const preview = document.getElementById('preview');
-const historyDiv = document.getElementById('history');
+const qrImage=document.getElementById('qrImage');
+const preview=document.getElementById('preview');
+const historyBox=document.getElementById('history');
+const avatar=document.getElementById('avatar');
 
 function generateQR(){
-  const text = document.getElementById('qrText').value.trim();
-  if(!text) return alert("টেক্সট লিখো আগে 🙂");
-
-  const url = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`;
-  qrImage.src = url;
+  const text=qrText.value.trim();
+  if(!text) return alert("টেক্সট দিন 🙂");
+  const url=`https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`;
+  qrImage.src=url;
   preview.style.display="block";
-
   saveHistory(text,url);
 }
 
 function downloadQR(){
-  const a = document.createElement('a');
-  a.href = qrImage.src;
-  a.download = "qr-code.png";
+  const a=document.createElement('a');
+  a.href=qrImage.src;
+  a.download="qr-code.png";
   a.click();
 }
 
 function saveHistory(text,url){
-  let data = JSON.parse(localStorage.getItem('qrHistory')) || [];
-  data.unshift({text,url});
+  const data=JSON.parse(localStorage.getItem('qrHistory'))||[];
+  data.unshift({
+    text,
+    url,
+    time:new Date().toLocaleString()
+  });
   localStorage.setItem('qrHistory',JSON.stringify(data));
   loadHistory();
 }
 
 function loadHistory(){
-  historyDiv.innerHTML="";
-  let data = JSON.parse(localStorage.getItem('qrHistory')) || [];
-  data.forEach(item=>{
+  historyBox.innerHTML="";
+  const data=JSON.parse(localStorage.getItem('qrHistory'))||[];
+  data.forEach((d,i)=>{
     const div=document.createElement('div');
-    div.className="history-item";
+    div.className="history-card";
     div.innerHTML=`
-      <img src="${item.url}">
-      <small>${item.text}</small>
-      <button class="small-btn" onclick="viewQR('${item.url}')">View</button>
+      <b>${i+1}</b>
+      <img src="${d.url}">
+      <div>
+        ${d.text.slice(0,40)}
+        <small>${d.time}</small>
+      </div>
+      <div class="actions">
+        <button onclick="viewQR('${d.url}')">View</button>
+        <button onclick="directDownload('${d.url}')">⬇</button>
+      </div>
     `;
-    historyDiv.appendChild(div);
+    historyBox.appendChild(div);
   });
 }
 
@@ -201,28 +228,35 @@ function viewQR(url){
   preview.style.display="block";
 }
 
-document.getElementById('profileUpload').addEventListener('change',e=>{
-  const file=e.target.files[0];
-  if(!file)return;
-  const reader=new FileReader();
-  reader.onload=()=> {
-    document.getElementById('profilePic').src=reader.result;
-    localStorage.setItem('profilePic',reader.result);
-  };
-  reader.readAsDataURL(file);
-});
+function directDownload(url){
+  const a=document.createElement('a');
+  a.href=url;
+  a.download="qr-code.png";
+  a.click();
+}
 
-document.getElementById('username').addEventListener('input',e=>{
+/* Profile */
+profileUpload.onchange=e=>{
+  const file=e.target.files[0];
+  const r=new FileReader();
+  r.onload=()=>{
+    avatar.innerHTML=`<img src="${r.result}">`;
+    localStorage.setItem('avatar',r.result);
+  };
+  r.readAsDataURL(file);
+};
+
+username.oninput=e=>{
   localStorage.setItem('username',e.target.value);
-});
+};
 
 window.onload=()=>{
   loadHistory();
-  const pic=localStorage.getItem('profilePic');
+  const pic=localStorage.getItem('avatar');
   const name=localStorage.getItem('username');
-  if(pic) profilePic.src=pic;
+  if(pic) avatar.innerHTML=`<img src="${pic}">`;
   if(name) username.value=name;
-}
+};
 </script>
 </body>
 </html>
